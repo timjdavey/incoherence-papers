@@ -1,15 +1,12 @@
 <div align="center">
 
-# Incoherence
+# Incoherence papers
 
-**Measuring complexity and self-organisation by asking a simple question:
-does the average still describe what actually happens?**
+**Measuring complexity and self-organisation**
 
-[![Incoherence paper](https://img.shields.io/badge/Entropy_2024-Incoherence-8A2BE2?style=flat-square)](https://www.mdpi.com/1099-4300/26/8/683)
-[![Cohesion paper](https://img.shields.io/badge/Entropy_2023-Cohesion-008080?style=flat-square)](https://www.mdpi.com/1099-4300/25/12/1605)
-[![Primers](https://img.shields.io/badge/primers-timjdavey.com-FBFAF7?style=flat-square&labelColor=333)](https://timjdavey.com/incoherence/)
-[![Python](https://img.shields.io/badge/python-3-3776AB?style=flat-square&logo=python&logoColor=white)](#running-it)
-[![MIT licence](https://img.shields.io/badge/licence-MIT-lightgrey?style=flat-square)](LICENSE)
+The code, simulations and notebooks for the papers.
+
+[![incoherence package](https://img.shields.io/badge/package-incoherence-2EA44F?style=flat-square)](https://github.com/timjdavey/incoherence) [![Incoherence paper](https://img.shields.io/badge/Entropy_2024-Incoherence-8A2BE2?style=flat-square)](https://www.mdpi.com/1099-4300/26/8/683) [![Cohesion paper](https://img.shields.io/badge/Entropy_2023-Cohesion-008080?style=flat-square)](https://www.mdpi.com/1099-4300/25/12/1605) [![Primers](https://img.shields.io/badge/primers-timjdavey.com-FBFAF7?style=flat-square&labelColor=333)](https://timjdavey.com/incoherence/) [![Python](https://img.shields.io/badge/python-3-3776AB?style=flat-square&logo=python&logoColor=white)](#running-the-notebooks) [![MIT licence](https://img.shields.io/badge/licence-MIT-lightgrey?style=flat-square)](LICENSE)
 
 </div>
 
@@ -30,8 +27,7 @@ does the average still describe what actually happens?**
 
 ## Start here
 
-The primers are the best way in. They explain the big picture with no equations or jargon, using
-interactive illustrations, and they're worth reading before the papers.
+The primers are the best way to understand the measures. They explain the big picture with no equations or jargon.
 
 <table>
   <tr>
@@ -52,62 +48,20 @@ interactive illustrations, and they're worth reading before the papers.
 
 ## What is this?
 
-Run a complex system twice from the same starting point and it can end up somewhere completely
-different, so its average outcome may describe nothing that actually happens. **Incoherence**
-measures how much an ensemble of runs disagree with each other, and **Cohesion** measures whether
-that disagreement is random or organised into a few recognisable patterns.
+This repository is the experimental code behind both papers. It holds `ensemblepy`, the original
+library that produced the published numbers, the simulations used to test the measures and the
+notebooks that made every figure. It is kept so the papers can be reproduced. It is not the place to start if you want to measure your own data.
 
-This repository is the code behind both papers: `ensemblepy`, the library that calculates the
-measures, the simulations used to test them, and the notebooks that produced every figure.
+> [!IMPORTANT]
+> **Want to calculate Incoherence or Cohesion? Use the
+> [`incoherence`](https://github.com/timjdavey/incoherence) package.**
+> It is a rebuild of the code here into something small, tested and fast. This repository used to
+> be called `incoherence`. It was renamed to `incoherence-papers` when the package took that name.
 
-> [!NOTE]
-> **Want to use `ensemblepy` for real? Get in touch.**
-> This code was written to produce the results in the papers. It wasn't designed to be used more
-> widely, and it isn't built for production workloads or large datasets, so expect rough edges,
-> research-grade APIs and a few stale tests. If you'd like to use Incoherence or Cohesion in your
-> own work, please [open an issue](https://github.com/timjdavey/incoherence/issues/new) and tell
-> me about it. I'd gladly work with you to rebuild it into something polished, well tested and
-> performant.
-
-## A quick taste
-
-`ensemblepy` takes a list of ensembles, where each ensemble is the list of observations from one
-run of your system, and returns the measures. The example below builds three systems of ten runs
-each: one where every run behaves the same, one that splits into two camps, and one where every
-run wanders off on its own.
-
-```python
-import numpy as np
-import ensemblepy as ep
-
-rng = np.random.default_rng(1)
-
-same    = [rng.normal(0, 1, 500) for _ in range(10)]
-camps   = [rng.normal(3 if i % 2 else -3, 1, 500) for i in range(10)]
-scatter = [rng.normal(rng.uniform(-4, 4), rng.uniform(0.3, 2), 500) for _ in range(10)]
-
-for name, runs in [("same", same), ("camps", camps), ("scatter", scatter)]:
-    m = ep.Continuous(runs, metrics=("incoherence", "cohesion"))
-    print(f"{name:8} incoherence={m.incoherence:.2f}  cohesion={m.cohesion:.2f}")
-```
+## Repo structure
 
 ```text
-same     incoherence=0.03  cohesion=0.95
-camps    incoherence=0.57  cohesion=0.80
-scatter  incoherence=0.45  cohesion=0.30
-```
-
-The identical runs are coherent (and trivially cohesive, since they form a single group). The
-two-camp system is incoherent but highly cohesive, while the scattered system is incoherent with
-little structure to lean on. Use `ep.Discrete(observations, bins)` for categorical or binned data,
-`ep.Collection(histograms)` if you already have distributions, and `ep.Correlation(x, y)` to use
-incoherence as a correlation measure. The one-liners `ep.incoherence(discrete, ...)` and
-`ep.cohesion(discrete, ...)` return a single number.
-
-## What's in the repo
-
-```text
-ensemblepy/              the measures
+ensemblepy/              the original library behind the papers
 ├── continuous.py        Continuous: ensembles of real-valued observations
 ├── discrete.py          Discrete: binned or categorical observations, plus chi² comparisons
 ├── collection.py        Collection: start from histograms rather than raw observations
@@ -136,6 +90,10 @@ notebooks/               the analysis and figures behind the papers
 └── correlation_coeff/   Incoherence as a correlation measure
 ```
 
+Some of `ensemblepy` was not carried over to the package. Plotting, the comparisons with other
+statistics and entropy in more than one dimension live only here.
+[Using `ensemblepy`](docs/ensemblepy.md) shows how to call it.
+
 Each part of the Incoherence paper's results has a notebook behind it. The notebooks in
 [`notebooks/incoherence/`](notebooks/incoherence/) carry the numbering from an earlier draft, so
 the table below maps them onto the sections of the published paper.
@@ -154,22 +112,30 @@ that didn't make it into the final paper. The Cohesion notebooks in
 [`notebooks/cohesion/`](notebooks/cohesion/) cover the Daisyworld example, ergodicity, language
 detection and the illustrative figures from the paper.
 
-## Running it
+[Reproducing the figures](docs/reproducing.md) maps every figure in both papers to the notebook
+and file that made it. [Work that was not published](docs/unpublished.md) describes the rest.
 
-The code is plain Python with no build step. Install the dependencies and open the notebooks from
-inside their folder, since each one adds the repo root to its path through `nbsetup.py`.
+## Corrections
+
+There is one known mistake in the text of the Incoherence paper and none in the Cohesion paper.
+Section 2.2 of the Incoherence paper gives the settings of the entropy estimator as `k = 100`,
+but the figures were made with `k = 10`. No figure, value or conclusion changes.
+[Corrections to the papers](docs/corrections.md) has the details and the corrected text.
+
+## Running the notebooks
+
+This section is for reproducing the papers. The code is plain Python with no build step. Install
+the dependencies and open the notebooks from inside their folder, since each one adds the repo
+root to its path through `nbsetup.py`.
 
 ```sh
-pip install -r requirements.txt
+pip install -r requirements.txt "mesa<3"
 jupyter notebook notebooks/
 ```
 
-A few practical notes, given the code's age. The simulations were written against Mesa 2 (they
-use `mesa.time.RandomActivation`, which Mesa 3 removed), so install `"mesa<3"` if a model fails to
-import. The larger Daisyworld runs are generated by the scripts in `simulations/daisy_world/` and
-written to `datasets/`, which is gitignored, so run those from the repo root before the notebooks
-that load them. The tests run with `python -m unittest`, though some of them predate later
-refactors and no longer pass.
+The code is old and most notebooks no longer run from top to bottom. The outputs saved inside
+them are the published runs. [Reproducing the figures](docs/reproducing.md) lists the versions
+that work, the datasets you have to regenerate and the tests that still pass.
 
 ## Citing
 
