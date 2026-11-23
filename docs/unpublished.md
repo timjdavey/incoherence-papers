@@ -16,8 +16,8 @@ It says what each piece does, what its saved notes claim and why it was left out
 
 ## Incoherence as a correlation measure
 
-Incoherence can tell you whether `y` depends on `x` in a scatter of points. It is an interesting
-result, but not interesting enough to take any further.
+The idea was to use incoherence to tell whether `y` depends on `x` in a scatter of points. We
+canned it because it did not pan out.
 
 Take a scatter of `x` and `y` points and slice it into vertical strips. Treat the `y` values in
 each strip as one trial. If `y` does not depend on `x`, every strip holds the same mix of `y`
@@ -69,9 +69,16 @@ It reads differently from the standard measures in four places.
 - **Noise pulls it down faster.** On a straight line with noise of 0.7, Pearson reads about 0.4.
   Incoherence reads 0.07, which is under that level.
 
-It was left out of the Incoherence paper so that it did not clutter the main argument. It went no
-further because other measures are already built for curved relationships, such as distance
-correlation and mutual information. It was never tested against them.
+It was left out of the Incoherence paper so that it did not clutter the main argument. We then
+canned the idea, because other measures are already built for curved relationships and they do
+the job better.
+
+A later scratch test on simulated data put it up against distance correlation, mutual information
+and four others. It lost to distance correlation in 7 of 8 comparisons and won none. Distance
+correlation also picks up the arch above more often, 64% of the time at 200 points against 33%
+for incoherence. The 0.08 level failed too. With no relationship in 200 points, it raised a false
+alarm between 9% and 99% of the time, depending on how `x` was spread. The test is not saved in
+this repository.
 
 The notebook has graphs for more shapes, including noisy lines, longer sine waves and the
 Datasaurus scatters. It uses "ergodic complexity", an older name for incoherence.
