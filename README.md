@@ -117,9 +117,10 @@ and file that made it. [Work that was not published](docs/unpublished.md) descri
 
 ## Corrections
 
-There is one known mistake in the text of the Incoherence paper and none in the Cohesion paper.
-Section 2.2 of the Incoherence paper gives the settings of the entropy estimator as `k = 100`,
-but the figures were made with `k = 10`. No figure, value or conclusion changes.
+Section 2.2 of the Incoherence paper gives the wrong settings for the entropy estimator, and the
+Cohesion paper needs no correction. The text gives `k = 100` and takes the square root of each
+density in Equation 3. Those are the settings for the last step of cohesion. The figures were
+made with `k = 10` and no square root. No figure, value or conclusion changes.
 [Corrections to the papers](docs/corrections.md) has the details and the corrected text.
 
 ## Running the notebooks
