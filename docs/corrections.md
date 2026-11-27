@@ -2,15 +2,17 @@
 
 This page records every known mistake in the text of the two papers.
 
-There is one in the Incoherence paper and none in the Cohesion paper.
+Section 2.2 of the Incoherence paper describes the continuous entropy estimator with the wrong
+settings. The Cohesion paper needs no correction.
 
-Section 2.2 describes the continuous entropy estimator.
-- It gives the settings used for cohesion `k=100`
-- However, the incoherence paper used `k=10`
+- **The constant `k`.** The text gives `k = 100`. The Incoherence paper used `k = 10`.
+- **The square root.** Equation 3 takes the variance of the square root of each density,
+  `Var̂(√G)`. The code took the variance of the densities themselves, `Var̂(G)`.
+- **Both come from the Cohesion paper.** They are the settings for the last step of cohesion, and
+  were carried over into the Incoherence paper by mistake.
 
-This is a setting which can be adjusted on the entropy estimator and is dependent on the spread of your observations. It changes the value of the entropy calculated slightly, but does not directly alter the incoherence value (only indirectly).
-
-None of the conclusions change.
+None of the conclusions change, because the paper reports what the code produced. Someone who
+builds the estimator from the text however will get a different result.
 
 
 ## What the paper says
@@ -18,6 +20,8 @@ None of the conclusions change.
 Section 2.2, "Continuous Entropy", around equations 2 and 3:
 
 - The density is worked out at `R = 100` reference points with the constant `k = 100`.
+- Equation 3 is `H = 1 − (Var̂(√G) − V0) / (V1 − V0)`. It takes the square root of each density
+  `g_j` in `G` before it takes the variance.
 - The scaling constants are `V0 = 0.0047683913076489465` and `V1 = 0.009711690148675985`, cited
   to the Cohesion paper (reference 18).
 
@@ -32,17 +36,31 @@ paper's continuous figures calls `ep.Continuous(...)` with those defaults.
 | Constant `k` | 100 | 10 |
 | Reference points `R` | 100 | 501 |
 | Range of the reference points | Not stated | −0.5 to 1.5, after the observations are scaled to 0 to 1 |
-| Power applied to each density | None stated | None |
+| Power applied to each density | Square root, in Equation 3 | None |
 | `V0`, maximum entropy | 0.0047683913076489465 | 0.007006952515415692 |
 | `V1`, minimum entropy | 0.009711690148675985 | 0.040028626993849875 |
 
 The code asks for 500 steps and a helper function rounds that up to 501 points.
+
+- **The figures confirm there was no square root.** Rebuilt without it, Figure 7A ends at 0.448,
+  as published. With the square root it ends at 0.658.
+- **So does the code's history.** `ensemblepy/densityvar.py` had no power setting at all before
+  30 November 2022. That day it gained `DEFAULT_POWER = 1`, which means no square root, and it
+  has not changed since.
 
 ## Where the wrong values came from
 
 They are the settings for the last step of cohesion, as described in the Cohesion paper
 (*Entropy* 25(12), 1605). That step uses `k = 100` and takes the square root of each density,
 because the pairwise divergences it measures are tightly bunched and need a sharper kernel.
+
+The square root in Equation 3 has the same source. Equation 4 of the Cohesion paper is the same
+equation, printed for that last step. The code only ever asks for the square root there, in
+`_cohesion` in `ensemblepy/stats.py`:
+
+```python
+return (1 - density_variance(divergences, power=0.5, k=100)) ** 2, divergences
+```
 
 The two constants printed in the Incoherence paper are exactly the ones the code stores for that
 case. In `CACHED_VS` in `ensemblepy/densityvar.py`:
@@ -54,14 +72,38 @@ case. In `CACHED_VS` in `ensemblepy/densityvar.py`:
 (100, (-0.5, 1.5), 500, 0.5, 1): (0.0047683913076489465, 0.009711690148675985),
 ```
 
-The description of the estimator was carried over from the Cohesion paper but somewhere between reviews the settings were not updated.
+The description of the estimator was carried over from the Cohesion paper but somewhere between reviewer feedback the settings were not updated.
+
+## The estimator as run is the better one
+
+The figures show which settings the code used. They cannot show which settings are better,
+because they were made with one of them. So we also scored both versions, with the `incoherence`
+package, on tests that each have a right answer of their own.
+
+| Test | Right answer | No square root, as run | Square root, as printed |
+| :-- | --: | --: | --: |
+| Rank agreement with Shannon entropy in 5 bins, 500 random shapes | 1 | 0.950 | 0.892 |
+| Mean gap to that Shannon entropy | 0 | 0.066 | 0.146 |
+| Widest gap between 1D and 2D, the shape in Cohesion Figure 3 | 0 | 0.033 | 0.082 |
+| Widest gap between 1D and 2D, the shape in Cohesion Figure 4 | 0 | 0.013 | 0.057 |
+
+- **The estimator as run sits about half as far from Shannon entropy.** Agreeing with Shannon
+  entropy and giving the same answer in any number of dimensions are what the papers claim for
+  the estimator.
+- **Repairing the square root does not close the gap.** Its kernel reaches further, so the grid
+  cuts its tail off. With `k = 20` or a wider grid it reaches 0.933 and 0.122 on the first two
+  rows, and does worse on the last two.
+- **The square root reads too much into stray observations.** It lifts low densities, so 1% of a
+  trial straying moves its entropy about four times as far as it moves Shannon entropy.
 
 ## What is and is not affected
 
 - **Not affected: any figure, value or conclusion.** The paper reports what the code produced.
 - **Not affected: the discrete results.** They use Shannon entropy and never touch `k`.
 - **Affected: anyone who builds the estimator from the text.** They get a different measure. For
-  example, they would get 0.17 or 0.23 where Figure 7A shows 0.45.
+  example, with every printed setting, the square root included, Figure 7A ends at about 0.17
+  where the paper shows 0.45. That uses the 501 reference points the printed `V0` and `V1` were
+  worked out for. Taking `R = 100` at its word gives 0.16.
 - **The Daisyworld figures (17 and 18) were not rerun**, because the saved datasets are no longer available. Their notebook calls the estimator with the same defaults as Figures 7 and 8.
 
 ## Corrected text
@@ -71,12 +113,16 @@ Section 2.2 should read, in substance:
 > The density is calculated at R = 501 evenly spaced reference points over the range [−0.5, 1.5],
 > after the observations have been normalised to [0, 1], with the constant set to k = 10.
 >
+> Equation 3 takes the variance of the densities themselves, Var̂(G), not of their square roots:
+> H = 1 − (Var̂(G) − V0) / (V1 − V0). The square root is only used in the last step of cohesion,
+> as described in the Cohesion paper.
+>
 > For these settings, V0 = 0.007006952515415692 is the variance of the densities for a maximum
 > entropy distribution (observations spread uniformly over [0, 1]), and
 > V1 = 0.040028626993849875 is the variance for a minimum entropy distribution (all observations
 > at the same value).
 
-Equations 2 and 3 themselves are correct as printed.
+Equation 2 is correct as printed.
 
 ## Two smaller wording points
 
@@ -93,33 +139,17 @@ These are not part of the mistake above. They are places which could do with cla
 
 > Davey, T. (2023). *Entropy*, 25(12), 1605. https://doi.org/10.3390/e25121605
 
-However a clarification on equation 2 of the Cohesion paper.
+Its estimator, Equations 3 and 4, is printed with `k = 100` and the square root. That is right,
+because section 4 brings it in for the last step of cohesion, the entropy of the divergences.
+Two points could do with clarification.
 
-Section 4 can be read more than one way when two samples hold different numbers of observations. This section says which reading the figures used.
+### The settings behind Figures 3 and 4
 
-Equation 2 pools two samples, `a` and `b`, and weights them by `w`. Section 4 describes the pooled
-sample as the observations of `a` and `b` combined, and also as the point-wise mean. Those are the
-same when the samples are the same size. When they differ, combining the observations gives the
-larger sample more say. The section offers `w = 1/2` or `w = n/N` and leaves the choice open.
-
-**What the figures used.** The observations were combined, and `w = 1/2`.
-
-**Where it shows.** Only in the bottom two panels of Figures 5 and 6. Each burst there is a
-sample, and section 5.1 says the count of observations in each pattern was drawn at random. Those
-bursts hold between 3 and 17 observations.
-
-| Figures 5 and 6 | Published | As run: combined, `w = 1/2` | Point-wise mean, `w = 1/2` | Combined, `w = n/N` |
-| :-- | :-- | :-- | :-- | :-- |
-| Five patterns | 0.5 | 0.524 | 0.394 | 0.460 |
-| No patterns | 0.1 | 0.141 | 0.133 | 0.157 |
-
-The top two panels are the same on every reading, because both of their patterns hold 10
-observations. The four panels stay in the same order on every reading, so the conclusion holds.
-
-Every other figure in both papers that uses the continuous estimator has samples of equal size, so
-the reading makes no difference to them. Figures 7 and 8 of the Incoherence paper use the same
-number of observations in every trial of a run. The Daisyworld figures in both papers use one
-temperature per grid cell. The notebook behind Figures 5 and 6 is
-`notebooks/cohesion/Language detection.ipynb`, seeded with 44, 52 and 32.
+- **The figures did not use the printed settings.** Figures 3 and 4 call their dashed line "the
+  density variance method described above". It was made with `k = 10` and no square root, the
+  defaults in `ensemblepy/densityvar.py`, by `notebooks/continuous_entropy/Dimensional invariance.ipynb`.
+- **The entropy of each sample used the same defaults.** Section 4 leaves the estimator behind
+  `H_a` in Equation 2 open, "defined on a system by system bases". For real-valued data, every
+  figure used `k = 10` and no square root.
 
 _The wording quoted from the papers was read from their PubMed Central copies._
